@@ -2,526 +2,657 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="ComicScan — upload a comic panel screenshot, find the title, chapter and details.">
+<meta name="theme-color" content="#0b0e1a">
 <title>ComicScan — Search Comic by Screenshot</title>
 <style>
-  :root{
-    --bg:#0b0e1a; --bg2:#10142a; --card:#151a33; --card2:#1a2040;
-    --line:#232a52; --text:#f4f6ff; --muted:#9aa3c7;
-    --accent:#5b5bd6; --accent2:#8b5cf6; --green:#4ade80; --amber:#fbbf24;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);
-    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;
-    -webkit-font-smoothing:antialiased}
-  a{color:inherit}
-  svg.ic{width:1.25em;height:1.25em;vertical-align:-.28em;flex-shrink:0}
-
-  /* ---------- navbar ---------- */
-  nav{position:sticky;top:0;z-index:50;background:rgba(11,14,26,.9);
-    backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-  .nav-in{max-width:1180px;margin:0 auto;padding:13px 22px;
-    display:flex;align-items:center;gap:32px}
-  .logo{font-size:1.22rem;font-weight:800;display:flex;align-items:center;gap:10px;
-    text-decoration:none;letter-spacing:.2px}
-  .logo .mark{width:34px;height:34px;border-radius:10px;display:flex;
-    align-items:center;justify-content:center;color:#fff;
-    background:linear-gradient(135deg,var(--accent),var(--accent2))}
-  .logo .mark svg{width:20px;height:20px}
-  .logo b{color:#b9b8ff;font-weight:800}
-  .links{display:flex;gap:26px;margin-left:10px}
-  .links a{text-decoration:none;color:var(--muted);font-size:.9rem;font-weight:500}
-  .links a:hover{color:var(--text)}
-  .nav-cta{margin-left:auto;background:var(--accent);color:#fff;border:0;
-    padding:10px 24px;border-radius:999px;font-weight:700;font-size:.88rem;
-    cursor:pointer;text-decoration:none;transition:.15s}
-  .nav-cta:hover{background:#6d6df0}
-
-  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
-  section{padding:64px 0}
-
-  /* ---------- hero ---------- */
-  .hero{display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center;
-    padding:60px 0 34px}
-  .hero h1{font-size:clamp(2.05rem,4.5vw,3.1rem);line-height:1.1;font-weight:800;letter-spacing:-.5px}
-  .hero h1 .grad{background:linear-gradient(90deg,#7c7cf4,#b39dff);
-    -webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p.sub{color:var(--muted);margin:18px 0 28px;font-size:1.02rem;line-height:1.65;max-width:480px}
-  .hero img.art{width:100%;border-radius:20px;border:1px solid var(--line);
-    box-shadow:0 24px 70px rgba(0,0,0,.55)}
-
-  #drop{border:1.5px dashed #3a4380;border-radius:16px;padding:28px 22px;
-    text-align:center;cursor:pointer;background:var(--bg2);transition:.2s;max-width:520px}
-  #drop:hover,#drop.over{border-color:var(--accent);background:#131840}
-  #drop .upl{color:var(--accent2);margin-bottom:10px}
-  #drop .upl svg{width:40px;height:40px}
-  #drop .or{color:var(--muted);font-size:.82rem;margin:8px 0}
-  #chooseBtn{display:inline-block;background:var(--accent);color:#fff;border:0;
-    padding:10px 34px;border-radius:999px;font-weight:700;font-size:.88rem;cursor:pointer}
-  #chooseBtn:hover{background:#6d6df0}
-  #drop small{color:var(--muted);display:block;margin-top:12px;font-size:.78rem;line-height:1.9}
-  #drop .kbd{display:inline-block;background:#0b0e1a;border:1px solid var(--line);
-    border-bottom-width:2px;border-radius:6px;padding:1px 8px;font-size:.72rem;
-    color:var(--muted);margin:0 2px;font-family:inherit}
-  input[type=file]{display:none}
-  #previewWrap{display:none;margin-top:16px;align-items:center;gap:14px}
-  #preview{width:74px;height:74px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
-  #cariBtn{padding:12px 38px;font-size:.92rem;border:0;border-radius:999px;cursor:pointer;
-    color:#fff;font-weight:700;background:var(--accent);transition:.15s}
-  #cariBtn:hover{background:#6d6df0}
-  #loading{display:none;margin-top:16px;color:var(--muted);font-size:.9rem;align-items:center;gap:12px}
-  .spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);
-    border-top-color:var(--accent);animation:putar 1s linear infinite;flex-shrink:0}
-  @keyframes putar{to{transform:rotate(360deg)}}
-  #warn{display:none;margin-top:16px;padding:12px 16px;border-radius:12px;max-width:520px;
-    background:#2b2111;border:1px solid #6b5426;color:#f3d894;font-size:.87rem}
-
-  /* ---------- results ---------- */
-  #hasilSec{display:none}
-  .sec-label{color:var(--accent2);font-size:.76rem;font-weight:800;
-    text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
-  h2.sec{font-size:1.7rem;font-weight:800;margin-bottom:6px;letter-spacing:-.3px}
-  p.sec-sub{color:var(--muted);font-size:.92rem;margin-bottom:26px}
-  #hasil{display:flex;flex-direction:column;gap:18px;max-width:880px}
-  .card{display:flex;background:var(--card);border:1px solid var(--line);
-    border-radius:18px;overflow:hidden;transition:.15s;align-items:stretch}
-  .card:hover{border-color:#38418a}
-  .side{width:236px;flex-shrink:0;background:rgba(0,0,0,.22);
-    display:flex;flex-direction:column}
-  .side .cover{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;
-    background:#080a14;display:block}
-  .card .body{padding:22px;flex:1;min-width:0}
-
-  /* ---------- chapter list (di bawah cover) ---------- */
-  .chapters{padding:12px 16px 14px}
-  .ch-head{font-size:.7rem;font-weight:800;text-transform:uppercase;
-    letter-spacing:1.5px;color:var(--muted);padding:4px 0 2px}
-  .ch-row{display:flex;align-items:center;gap:10px;padding:8px 0;
-    border-top:1px solid var(--line)}
-  .ch-row:first-of-type{border-top:0}
-  .ch-row .ch-name{font-size:.8rem;font-weight:700;min-width:80px}
-  .ch-row .bar{flex:1;height:6px;background:#0b0e1a;border-radius:99px;overflow:hidden;min-width:40px}
-  .ch-row .bar i{display:block;height:100%;border-radius:99px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2))}
-  .ch-row .pct{font-size:.78rem;font-weight:700;color:var(--green);min-width:50px;text-align:right}
-  .ch-row.top .ch-name{color:#c9b8ff}
-  .card .body{padding:20px 22px;flex:1;min-width:0}
-  .card .rank{font-size:.68rem;color:var(--muted);font-weight:800;
-    text-transform:uppercase;letter-spacing:1.5px}
-  .card h3{font-size:1.28rem;margin:5px 0 3px;letter-spacing:-.2px}
-  .card .alt{color:var(--muted);font-size:.8rem;line-height:1.55;margin-bottom:12px}
-  .meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
-  .pill{font-size:.76rem;font-weight:700;padding:5px 14px;border-radius:999px;
-    background:var(--accent);color:#fff}
-  .pill.dim{background:#232a52;color:#c6cdf5;font-weight:600}
-  .match{font-size:.8rem;font-weight:700;padding:5px 12px;border-radius:999px;
-    background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
-  .match.mid{background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.3)}
-  .ascore{font-size:.82rem;color:var(--muted)}
-  .ascore b{color:var(--amber)}
-  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-  .chips span{font-size:.72rem;color:#c6cdf5;border:1px solid var(--line);
-    padding:3px 11px;border-radius:999px;background:var(--card2)}
-  .staff{font-size:.82rem;color:var(--muted);margin-bottom:10px;line-height:1.7}
-  .staff b{color:#c6cdf5;font-weight:600}
-  .sinopsis{font-size:.86rem;color:var(--muted);line-height:1.65;
-    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  .al{margin-top:12px;font-size:.84rem}
-  .al a{color:#8f8ff5;text-decoration:none;font-weight:600;
-    display:inline-flex;align-items:center;gap:6px}
-  .al a:hover{text-decoration:underline}
-
-  /* ---------- responsive ---------- */
-  #menuBtn{display:none;background:none;border:0;color:var(--text);cursor:pointer;padding:8px}
-  #menuBtn svg{width:24px;height:24px}
-  .mobile-menu{display:none}
-
-  @media(max-width:1024px){
-    .hero h1{font-size:2.6rem}
-  }
-  @media(max-width:900px){
-    .hero{grid-template-columns:1fr;gap:32px;padding-top:44px}
-    .hero img.art{max-height:380px;object-fit:cover}
-    .feat-grid{grid-template-columns:repeat(2,1fr)}
-    .steps{grid-template-columns:1fr}
-    /* kartu hasil: tumpuk vertikal */
-    .card{flex-direction:column}
-    .side{width:100%;flex-direction:row;align-items:stretch}
-    .side .cover{width:150px;flex-shrink:0}
-    .chapters{flex:1;min-width:0}
-  }
-  @media(max-width:760px){
-    .links{display:none}
-    #menuBtn{display:block}
-    .nav-cta{margin-left:auto;padding:9px 18px;font-size:.82rem}
-    .mobile-menu{display:none;border-top:1px solid var(--line);padding:6px 22px 14px;
-      background:rgba(11,14,26,.97)}
-    .mobile-menu.open{display:block}
-    .mobile-menu a{display:block;padding:11px 0;color:var(--muted);
-      text-decoration:none;font-size:.92rem;border-bottom:1px solid var(--line)}
-    .mobile-menu a:last-child{border-bottom:0}
-    section{padding:48px 0}
-  }
-  @media(max-width:560px){
-    .hero h1{font-size:2.05rem}
-    .hero p.sub{font-size:.94rem}
-    .hero img.art{max-height:260px}
-    .feat-grid{grid-template-columns:1fr}
-    .side{flex-direction:column}
-    .side .cover{width:100%;max-height:300px}
-    .card .body{padding:18px}
-    .card h3{font-size:1.12rem}
-    #previewWrap{flex-wrap:wrap}
-    .foot-in{flex-direction:column;gap:8px;text-align:center}
-    .foot-in .sp{margin-left:0}
-    h2.sec{font-size:1.4rem}
-  }
-
-  /* ---------- features ---------- */
-  .feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:30px}
-  .feat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 20px}
-  .feat .ic{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;
-    justify-content:center;margin-bottom:14px;color:#fff}
-  .feat .ic svg{width:22px;height:22px}
-  .feat h4{font-size:.96rem;margin-bottom:8px}
-  .feat p{color:var(--muted);font-size:.84rem;line-height:1.6}
-
-  /* ---------- steps ---------- */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
-  .step{background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:28px 24px;position:relative}
-  .step .num{position:absolute;top:-14px;left:22px;width:30px;height:30px;border-radius:50%;
-    background:var(--accent);display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:.9rem}
-  .step h4{margin:8px 0 10px;font-size:1rem}
-  .step p{color:var(--muted);font-size:.86rem;line-height:1.65}
-
-  /* ---------- popular ---------- */
-  .pop-row{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 14px;margin-top:26px}
-  .pop{flex:0 0 150px;background:var(--card);border:1px solid var(--line);
-    border-radius:14px;overflow:hidden}
-  .pop img{width:100%;height:200px;object-fit:cover;background:#080a14;display:block}
-  .pop .t{padding:10px 12px;font-size:.78rem;font-weight:600;line-height:1.4;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pop .g{padding:0 12px 12px;font-size:.7rem;color:var(--muted);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-  /* ---------- faq ---------- */
-  .faq{max-width:760px;margin-top:26px}
-  details{background:var(--card);border:1px solid var(--line);border-radius:14px;
-    margin-bottom:12px;overflow:hidden}
-  summary{padding:18px 22px;cursor:pointer;font-weight:600;font-size:.94rem;list-style:none}
-  summary::-webkit-details-marker{display:none}
-  summary::after{content:'+';float:right;color:var(--accent2);font-size:1.2rem;font-weight:800}
-  details[open] summary::after{content:'−'}
-  details p{padding:0 22px 20px;color:var(--muted);font-size:.87rem;line-height:1.7}
-
-  footer{border-top:1px solid var(--line);margin-top:40px}
-  .foot-in{max-width:1180px;margin:0 auto;padding:28px 22px;display:flex;
-    align-items:center;gap:10px;color:var(--muted);font-size:.84rem}
-  .foot-in .sp{margin-left:auto}
+:root{
+--bg:#0b0e1a;--bg2:#10142a;--card:#151a33;--card2:#1a2040;
+--line:#232a52;--line2:#2c3563;--text:#f4f6ff;--muted:#9aa3c7;--muted2:#c6cdf5;
+--accent:#5b5bd6;--accentHi:#6d6df0;--accent2:#8b5cf6;
+--green:#4ade80;--amber:#fbbf24;--red:#f87171;
+--rS:12px;--rM:16px;--rL:20px;--rX:24px;--navH:62px;
+--shadow:0 18px 50px rgba(0,0,0,.45);
+--font:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html,body{max-width:100%;overflow-x:clip}
+body{background:var(--bg);color:var(--text);font-family:var(--font);
+min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit}
+button{font-family:inherit;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:3px;border-radius:8px}
+svg.ic{width:1.25em;height:1.25em;vertical-align:-.28em;flex-shrink:0}
+.wrap{width:100%;max-width:1180px;margin-inline:auto;padding-inline:clamp(16px,4vw,24px)}
+section{padding-block:clamp(40px,7vw,72px);scroll-margin-top:calc(var(--navH) + 12px)}
+.sec-label{color:var(--accent2);font-size:.74rem;font-weight:800;
+text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+h2.sec{font-size:clamp(1.35rem,3.4vw,1.8rem);font-weight:800;
+letter-spacing:-.3px;line-height:1.25;text-wrap:balance}
+p.sec-sub{color:var(--muted);font-size:clamp(.88rem,2vw,.95rem);
+margin-top:6px;margin-bottom:22px;max-width:62ch}
+/* navbar */
+nav{position:sticky;top:0;z-index:50;background:rgba(11,14,26,.9);
+backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+border-bottom:1px solid var(--line)}
+.nav-in{width:100%;max-width:1180px;margin-inline:auto;min-width:0;
+padding:10px clamp(16px,4vw,24px);display:flex;align-items:center;gap:10px}
+.logo{font-size:1.12rem;font-weight:800;display:flex;align-items:center;
+gap:10px;text-decoration:none;white-space:nowrap;flex-shrink:0}
+.logo .mark{width:34px;height:34px;border-radius:10px;display:flex;flex-shrink:0;
+align-items:center;justify-content:center;color:#fff;
+background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.logo .mark svg{width:20px;height:20px}
+.logo b{color:#b9b8ff}
+.links{display:none;gap:22px;margin-left:14px}
+.links a{text-decoration:none;color:var(--muted);font-size:.9rem;
+font-weight:500;white-space:nowrap;padding:8px 2px}
+.links a:hover{color:var(--text)}
+.nav-cta{margin-left:auto;background:var(--accent);color:#fff;border:0;
+padding:10px 20px;border-radius:999px;font-weight:700;font-size:.84rem;
+cursor:pointer;text-decoration:none;white-space:nowrap;flex-shrink:0;
+min-height:42px;display:inline-flex;align-items:center;transition:.15s}
+.nav-cta:hover{background:var(--accentHi)}
+#menuBtn{display:inline-flex;background:none;border:0;color:var(--text);
+cursor:pointer;padding:9px;border-radius:10px;margin-left:2px;flex-shrink:0;
+min-width:44px;min-height:44px;align-items:center;justify-content:center}
+#menuBtn:hover{background:rgba(255,255,255,.07)}
+#menuBtn svg{width:24px;height:24px}
+.mobile-menu{display:none;border-top:1px solid var(--line);
+padding:4px clamp(16px,4vw,24px) 12px;background:rgba(11,14,26,.97)}
+.mobile-menu.open{display:block}
+.mobile-menu a{display:block;padding:13px 2px;color:var(--muted);
+text-decoration:none;font-size:.94rem;border-bottom:1px solid var(--line)}
+.mobile-menu a:last-child{border-bottom:0}
+/* hero + upload */
+.hero{display:grid;grid-template-columns:1fr;gap:26px;align-items:start;
+padding-block:clamp(26px,6vw,58px) clamp(18px,4vw,32px)}
+.hero-copy,.hero-art{min-width:0;max-width:100%}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;
+font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted2);
+background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);
+padding:7px 14px;border-radius:999px;margin-bottom:14px;max-width:100%}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;
+background:var(--green);box-shadow:0 0 8px var(--green)}
+.hero h1{font-size:clamp(1.9rem,7vw,3.05rem);line-height:1.08;font-weight:800;
+letter-spacing:-.5px;text-wrap:balance;overflow-wrap:anywhere}
+.hero h1 .grad{background:linear-gradient(90deg,#7c7cf4,#b39dff);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.sub{color:var(--muted);margin:14px 0 20px;max-width:52ch;
+font-size:clamp(.92rem,2.4vw,1.02rem);line-height:1.65}
+.hero-stats{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:20px}
+.hero-stats .stat{display:flex;align-items:baseline;gap:7px;min-width:0}
+.hero-stats b{font-size:1rem;font-variant-numeric:tabular-nums}
+.hero-stats span{color:var(--muted);font-size:.78rem;white-space:nowrap}
+#drop{border:1.5px dashed #3a4380;border-radius:var(--rM);
+padding:clamp(20px,5vw,28px) clamp(14px,4vw,22px);text-align:center;
+cursor:pointer;background:var(--bg2);transition:.2s;width:100%;max-width:560px}
+#drop:hover,#drop.over{border-color:var(--accent);background:#131840}
+#drop .upl{color:var(--accent2);margin-bottom:10px}
+#drop .upl svg{width:40px;height:40px;margin-inline:auto}
+#drop b{font-size:clamp(.9rem,2.4vw,.98rem);display:block}
+#drop .or{color:var(--muted);font-size:.8rem;margin:10px 0}
+#chooseBtn{display:inline-flex;align-items:center;justify-content:center;
+background:var(--accent);color:#fff;border:0;min-height:46px;padding:11px 32px;
+border-radius:999px;font-weight:700;font-size:.9rem;cursor:pointer;
+transition:.15s;max-width:100%}
+#chooseBtn:hover{background:var(--accentHi)}
+#chooseBtn:active{transform:scale(.98)}
+#drop small{color:var(--muted);display:block;margin-top:12px;
+font-size:.76rem;line-height:2}
+#drop .kbd{display:inline-block;background:#0b0e1a;border:1px solid var(--line);
+border-bottom-width:2px;border-radius:6px;padding:1px 8px;font-size:.7rem;
+color:var(--muted);margin:0 2px;font-family:inherit;white-space:nowrap}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0;
+overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#previewWrap{display:none;margin-top:14px;gap:10px;align-items:center;
+background:var(--card);border:1px solid var(--line);border-radius:var(--rM);
+padding:12px;width:100%;max-width:560px}
+#previewWrap.show{display:flex}
+#preview{width:62px;height:62px;object-fit:cover;flex-shrink:0;
+border-radius:var(--rS);border:1px solid var(--line)}
+#previewMeta{flex:1;min-width:0;font-size:.78rem;color:var(--muted)}
+#previewMeta b{display:block;color:var(--text);font-size:.83rem;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#previewMeta span{font-variant-numeric:tabular-nums}
+#cariBtn{padding:12px 22px;font-size:.85rem;border:0;border-radius:999px;
+cursor:pointer;color:#fff;font-weight:700;background:var(--accent);
+transition:.15s;flex-shrink:0;min-height:46px;white-space:nowrap}
+#cariBtn:hover:not(:disabled){background:var(--accentHi)}
+#cariBtn:disabled{opacity:.6;cursor:wait}
+#clearBtn{background:transparent;border:1px solid var(--line);color:var(--muted);
+border-radius:999px;padding:10px 13px;font-size:.8rem;font-weight:600;
+cursor:pointer;flex-shrink:0;min-height:44px;min-width:44px}
+#clearBtn:hover{color:var(--text);border-color:var(--line2)}
+#loading{display:none;margin-top:14px;color:var(--muted);font-size:.86rem;
+align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+border-radius:var(--rM);padding:14px 16px;width:100%;max-width:560px}
+#loading.show{display:flex}
+.spin{width:26px;height:26px;border-radius:50%;flex-shrink:0;
+border:3px solid var(--line);border-top-color:var(--accent);
+animation:putar 1s linear infinite}
+@keyframes putar{to{transform:rotate(360deg)}}
+#loading .ltxt{min-width:0}
+#warn{display:none;margin-top:14px;padding:13px 16px;border-radius:var(--rS);
+width:100%;max-width:560px;background:#2b2111;border:1px solid #6b5426;
+color:#f3d894;font-size:.85rem;line-height:1.6;overflow-wrap:anywhere}
+#warn.show{display:block}
+#warn.err{background:#2e1519;border-color:#6e2b33;color:#fca5a5}
+.hero-art .frame{position:relative;border-radius:var(--rL);overflow:hidden;
+border:1px solid var(--line);box-shadow:var(--shadow);background:var(--bg2)}
+.hero img.art{width:100%;height:auto;aspect-ratio:16/10;object-fit:cover}
+.hero-art .badge{position:absolute;left:12px;bottom:12px;right:12px;
+display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--muted2);
+background:rgba(11,14,26,.84);backdrop-filter:blur(8px);
+border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.hero-art .badge b{color:var(--text)}
+.hero-art .badge .ok{width:8px;height:8px;border-radius:50%;flex-shrink:0;
+background:var(--green);box-shadow:0 0 10px var(--green)}
+/* results */
+#hasilSec{display:none;scroll-margin-top:calc(var(--navH) + 12px)}
+#hasilSec.show{display:block}
+#hasil{display:grid;grid-template-columns:1fr;gap:16px;max-width:920px}
+.resCount{color:var(--muted);font-size:.84rem;margin-bottom:14px}
+.card{display:grid;grid-template-columns:1fr;background:var(--card);
+border:1px solid var(--line);border-radius:var(--rL);overflow:hidden;
+min-width:0;transition:border-color .15s}
+.card:hover{border-color:#38418a}
+.side{background:rgba(0,0,0,.22);display:flex;flex-direction:column;min-width:0}
+.side .cover{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:top;
+background:#080a14}
+.card .body{padding:clamp(16px,4vw,22px);min-width:0}
+.chapters{padding:12px clamp(14px,4vw,18px) 14px;min-width:0}
+.ch-head{font-size:.66rem;font-weight:800;text-transform:uppercase;
+letter-spacing:1.5px;color:var(--muted);padding:4px 0 2px}
+.ch-row{display:flex;align-items:center;gap:10px;padding:8px 0;
+border-top:1px solid var(--line);min-width:0}
+.ch-row:first-of-type{border-top:0}
+.ch-row .ch-name{font-size:.78rem;font-weight:700;flex-shrink:0;white-space:nowrap}
+.ch-row .bar{flex:1;height:6px;background:#0b0e1a;border-radius:99px;
+overflow:hidden;min-width:30px}
+.ch-row .bar i{display:block;height:100%;border-radius:99px;
+background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.ch-row .pct{font-size:.75rem;font-weight:700;color:var(--green);min-width:46px;
+text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.ch-row.top .ch-name{color:#c9b8ff}
+.card .rank{font-size:.65rem;color:var(--muted);font-weight:800;
+text-transform:uppercase;letter-spacing:1.5px;display:flex;flex-wrap:wrap;
+align-items:center;gap:8px}
+.card h3{font-size:clamp(1.05rem,3vw,1.28rem);margin:6px 0 3px;
+letter-spacing:-.2px;line-height:1.3;overflow-wrap:anywhere}
+.card .alt{color:var(--muted);font-size:.79rem;line-height:1.55;
+margin-bottom:12px;overflow-wrap:anywhere}
+.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pill{font-size:.73rem;font-weight:700;padding:5px 13px;border-radius:999px;
+background:var(--accent);color:#fff;white-space:nowrap}
+.pill.dim{background:#232a52;color:var(--muted2);font-weight:600}
+.match{font-size:.75rem;font-weight:700;padding:5px 12px;border-radius:999px;
+background:rgba(74,222,128,.12);color:var(--green);
+border:1px solid rgba(74,222,128,.3);white-space:nowrap}
+.match.mid{background:rgba(251,191,36,.1);color:var(--amber);
+border-color:rgba(251,191,36,.3)}
+.ascore{font-size:.8rem;color:var(--muted);white-space:nowrap}
+.ascore b{color:var(--amber)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chips span{font-size:.7rem;color:var(--muted2);border:1px solid var(--line);
+padding:3px 11px;border-radius:999px;background:var(--card2);max-width:100%;
+overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.staff{font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.7;
+overflow-wrap:anywhere}
+.staff b{color:var(--muted2);font-weight:600}
+.sinopsis{font-size:.85rem;color:var(--muted);line-height:1.65;
+display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;
+overflow:hidden;overflow-wrap:anywhere}
+.sinopsis.open{display:block;-webkit-line-clamp:unset}
+.moreBtn{background:none;border:0;color:#8f8ff5;font-size:.8rem;font-weight:700;
+cursor:pointer;padding:8px 0;min-height:36px}
+.al{margin-top:8px;font-size:.83rem}
+.al a{color:#8f8ff5;text-decoration:none;font-weight:600;
+display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 0}
+.al a:hover{text-decoration:underline}
+.skel{border-radius:var(--rL);border:1px solid var(--line);min-height:220px;
+background:linear-gradient(100deg,var(--card) 40%,var(--card2) 50%,var(--card) 60%);
+background-size:200% 100%;animation:shim 1.2s infinite}
+@keyframes shim{to{background-position:-200% 0}}
+.feat-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:24px}
+.feat{background:var(--card);border:1px solid var(--line);
+border-radius:var(--rM);padding:22px 20px;min-width:0}
+.feat .fic{width:46px;height:46px;border-radius:50%;display:flex;
+align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0}
+.feat .fic svg{width:22px;height:22px}
+.feat h4{font-size:.95rem;margin-bottom:7px}
+.feat p{color:var(--muted);font-size:.84rem;line-height:1.6}
+.howBox{background:var(--bg2);border:1px solid var(--line);
+border-radius:var(--rX);padding:clamp(26px,5vw,50px) clamp(18px,4vw,40px)}
+.steps{display:grid;grid-template-columns:1fr;gap:26px 16px;margin-top:28px}
+.step{background:var(--card);border:1px solid var(--line);
+border-radius:var(--rM);padding:26px 22px 24px;position:relative;min-width:0}
+.step .num{position:absolute;top:-14px;left:20px;width:30px;height:30px;
+border-radius:50%;background:var(--accent);display:flex;align-items:center;
+justify-content:center;font-weight:800;font-size:.9rem}
+.step h4{margin:8px 0 8px;font-size:.98rem}
+.step p{color:var(--muted);font-size:.85rem;line-height:1.65}
+.step .kbd{display:inline-block;background:#0b0e1a;border:1px solid var(--line);
+border-bottom-width:2px;border-radius:6px;padding:1px 8px;font-size:.72rem;
+color:var(--muted);margin:0 2px;font-family:inherit;white-space:nowrap}
+.pop-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(140px,160px);
+gap:12px;overflow-x:auto;padding:4px 2px 14px;margin-top:22px;
+scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.pop{scroll-snap-align:start;background:var(--card);border:1px solid var(--line);
+border-radius:14px;overflow:hidden;min-width:0}
+.pop img{width:100%;aspect-ratio:3/4;object-fit:cover;background:#080a14}
+.pop .t{padding:10px 12px 2px;font-size:.78rem;font-weight:600;line-height:1.4;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop .g{padding:0 12px 12px;font-size:.7rem;color:var(--muted);
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.faq{max-width:760px;margin-top:22px}
+details{background:var(--card);border:1px solid var(--line);
+border-radius:14px;margin-bottom:10px;overflow:hidden}
+summary{padding:16px 20px;cursor:pointer;font-weight:600;font-size:.9rem;
+list-style:none;display:flex;align-items:center;gap:10px;min-height:56px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';margin-left:auto;color:var(--accent2);
+font-size:1.2rem;font-weight:800;flex-shrink:0}
+details[open] summary::after{content:'\2212'}
+details p{padding:0 20px 18px;color:var(--muted);font-size:.86rem;line-height:1.7}
+footer{border-top:1px solid var(--line);margin-top:24px}
+.foot-in{max-width:1180px;margin:0 auto;padding:24px clamp(16px,4vw,24px);
+display:flex;flex-direction:column;align-items:center;gap:10px;
+color:var(--muted);font-size:.83rem;text-align:center}
+.foot-in .flogo{display:flex;align-items:center;gap:8px;text-decoration:none;
+font-weight:800;color:var(--text);font-size:.95rem}
+@media(min-width:640px){
+.feat-grid{grid-template-columns:repeat(2,1fr)}
+.side{flex-direction:row;align-items:stretch}
+.side .cover{width:168px;flex-shrink:0;aspect-ratio:3/4}
+.chapters{flex:1;display:flex;flex-direction:column;justify-content:center}
+#preview{width:72px;height:72px}
+.foot-in{flex-direction:row;text-align:left}
+.foot-in .sp{margin-left:auto}
+}
+@media(min-width:860px){
+.links{display:flex}
+#menuBtn,.mobile-menu{display:none !important}
+.nav-cta{padding:10px 24px;font-size:.86rem}
+.hero{grid-template-columns:1.02fr .98fr;gap:clamp(28px,4vw,48px);align-items:center}
+.hero-art{position:sticky;top:calc(var(--navH) + 16px)}
+.steps{grid-template-columns:repeat(3,1fr)}
+}
+@media(min-width:1024px){
+.feat-grid{grid-template-columns:repeat(4,1fr)}
+.card{grid-template-columns:236px 1fr}
+.side{flex-direction:column}
+.side .cover{width:100%;aspect-ratio:3/4}
+}
+@media(prefers-reduced-motion:reduce){
+html{scroll-behavior:auto}
+*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
 </style>
 </head>
 <body>
-
 <nav>
-  <div class="nav-in">
-    <a class="logo" href="#home">
-      <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></span>
-      Comic<b>Scan</b>
-    </a>
-    <div class="links">
-      <a href="#home">Home</a>
-      <a href="#how">How It Works</a>
-      <a href="#features">Features</a>
-      <a href="#faq">FAQ</a>
-    </div>
-    <a class="nav-cta" href="#home" id="ctaBtn">Start Scanning</a>
-    <button id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
-  </div>
-  <div class="mobile-menu" id="mmenu">
-    <a href="#home">Home</a>
-    <a href="#how">How It Works</a>
-    <a href="#features">Features</a>
-    <a href="#faq">FAQ</a>
-  </div>
+<div class="nav-in">
+<a class="logo" href="#home" aria-label="ComicScan home">
+<span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></span>
+Comic<b>Scan</b>
+</a>
+<div class="links">
+<a href="#home">Home</a>
+<a href="#how">How It Works</a>
+<a href="#features">Features</a>
+<a href="#faq">FAQ</a>
+</div>
+<a class="nav-cta" href="#home" id="ctaBtn">Start Scanning</a>
+<button id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mmenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+</div>
+<div class="mobile-menu" id="mmenu">
+<a href="#home">Home</a>
+<a href="#how">How It Works</a>
+<a href="#features">Features</a>
+<a href="#faq">FAQ</a>
+</div>
 </nav>
-
-<!-- HERO -->
 <div class="wrap" id="home">
-  <div class="hero">
-    <div>
-      <h1>Search <span class="grad">Comic</span><br>by Screenshot</h1>
-      <p class="sub">Upload a screenshot, find the comic title, chapter,
-        and more. Quickly and accurately.</p>
-      <div id="drop">
-        <div class="upl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-        <b>Drag &amp; drop your image here</b>
-        <div class="or">or</div>
-        <button id="chooseBtn" type="button">Choose Image</button>
-        <small>Supports JPG, PNG, WEBP (Max 10MB)<br>
-          You can also paste directly with <span class="kbd">Ctrl</span>+<span class="kbd">V</span></small>
-        <input type="file" id="fileInput" accept="image/*">
-      </div>
-      <div id="previewWrap">
-        <img id="preview" alt="Preview">
-        <button id="cariBtn">Scan Panel</button>
-      </div>
-      <div id="loading"><div class="spin"></div>
-        <span>Analyzing image… <span id="timer">0</span>s <span style="opacity:.7">(usually about 20 seconds)</span></span></div>
-      <div id="warn"></div>
-    </div>
-    <div><img class="art" src="/static/hero.png" alt="Reading manga illustration"></div>
-  </div>
+<div class="hero">
+<div class="hero-copy">
+<div class="eyebrow"><span class="dot"></span>AI reverse image search</div>
+<h1>Search <span class="grad">Comic</span><br>by Screenshot</h1>
+<p class="sub">Upload a panel screenshot and find the comic title, chapter and full details. Fast, free, no sign-up.</p>
+<div class="hero-stats">
+<div class="stat"><b id="statPanels">—</b><span>panels indexed</span></div>
+<div class="stat"><b id="statComics">—</b><span>comics</span></div>
+<div class="stat"><b>~20s</b><span>per search</span></div>
 </div>
-
-<!-- RESULTS -->
+<div id="drop" role="button" tabindex="0" aria-label="Upload image: click, drag and drop, or paste">
+<div class="upl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+<b>Drag &amp; drop your image here</b>
+<div class="or">or</div>
+<button id="chooseBtn" type="button">Choose Image</button>
+<small>Supports JPG, PNG, WEBP &middot; Max 10MB<br>
+Paste directly with <span class="kbd">Ctrl</span>+<span class="kbd">V</span></small>
+<input type="file" id="fileInput" accept="image/*" aria-label="Choose image file">
+</div>
+<div id="previewWrap">
+<img id="preview" alt="Selected panel preview">
+<div id="previewMeta"><b id="previewName">image</b><span id="previewSize"></span></div>
+<button id="cariBtn" type="button">Scan Panel</button>
+<button id="clearBtn" type="button" aria-label="Remove image">&#10005;</button>
+</div>
+<div id="loading" role="status" aria-live="polite"><div class="spin"></div>
+<div class="ltxt">Analyzing image&hellip; <b id="timer">0</b>s <span style="opacity:.7">(usually about 20 seconds)</span></div></div>
+<div id="warn" role="alert"></div>
+</div>
+<div class="hero-art">
+<div class="frame">
+<img class="art" src="/static/hero.png" alt="Reading manga illustration" fetchpriority="high">
+<div class="badge"><span class="ok"></span><span><b>Private by design</b> &mdash; uploads are never stored</span></div>
+</div>
+</div>
+</div>
+</div>
 <div class="wrap" id="hasilSec">
-  <section style="padding-top:10px">
-    <div class="sec-label">Search Results</div>
-    <h2 class="sec">Your panel was found in…</h2>
-    <p class="sec-sub">Sorted by highest similarity.</p>
-    <div id="hasil"></div>
-  </section>
+<section style="padding-top:8px">
+<div class="sec-label">Search Results</div>
+<h2 class="sec">Your panel was found in&hellip;</h2>
+<p class="sec-sub" id="resCount">Sorted by highest similarity.</p>
+<div id="hasil"></div>
+</section>
 </div>
-
-<!-- FEATURES -->
 <div class="wrap" id="features">
-  <section>
-    <div class="sec-label">Features</div>
-    <h2 class="sec">Why ComicScan?</h2>
-    <div class="feat-grid">
-      <div class="feat">
-        <div class="ic" style="background:rgba(91,91,214,.2);color:#9d9df5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></div>
-        <h4>Reverse Image Search</h4>
-        <p>Find the exact comic from any screenshot — even a small panel crop.</p>
-      </div>
-      <div class="feat">
-        <div class="ic" style="background:rgba(74,222,128,.15);color:#4ade80"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-        <h4>Fast &amp; Accurate</h4>
-        <p>Get results in seconds with a clear similarity score for every match.</p>
-      </div>
-      <div class="feat">
-        <div class="ic" style="background:rgba(139,92,246,.18);color:#b39dff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
-        <h4>Detailed Information</h4>
-        <p>Title, chapter, author, genres, status, synopsis — powered by AniList data.</p>
-      </div>
-      <div class="feat">
-        <div class="ic" style="background:rgba(251,191,36,.15);color:#fbbf24"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
-        <h4>Free to Use</h4>
-        <p>No registration required. Uploaded images are never stored.</p>
-      </div>
-    </div>
-  </section>
+<section>
+<div class="sec-label">Features</div>
+<h2 class="sec">Why ComicScan?</h2>
+<p class="sec-sub">Purpose-built for finding the exact source of any comic screenshot.</p>
+<div class="feat-grid">
+<div class="feat">
+<div class="fic" style="background:rgba(91,91,214,.2);color:#9d9df5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></div>
+<h4>Reverse Image Search</h4>
+<p>Find the exact comic from any screenshot &mdash; even a small panel crop.</p>
 </div>
-
-<!-- HOW IT WORKS -->
+<div class="feat">
+<div class="fic" style="background:rgba(74,222,128,.15);color:#4ade80"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+<h4>Clear Similarity Scores</h4>
+<p>Every match shows a score, plus per-chapter ranking so you know what to trust.</p>
+</div>
+<div class="feat">
+<div class="fic" style="background:rgba(139,92,246,.18);color:#b39dff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+<h4>Detailed Information</h4>
+<p>Title, chapter, author, genres, status and synopsis &mdash; powered by AniList data.</p>
+</div>
+<div class="feat">
+<div class="fic" style="background:rgba(251,191,36,.15);color:#fbbf24"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+<h4>Free &amp; Private</h4>
+<p>No registration. Uploaded images are used once, then discarded.</p>
+</div>
+</div>
+</section>
+</div>
 <div class="wrap" id="how">
-  <section style="background:var(--bg2);border-radius:24px;padding:54px 40px">
-    <div class="sec-label">How It Works</div>
-    <h2 class="sec">Find Your Comic in 3 Simple Steps</h2>
-    <p class="sec-sub">Just upload, search, and get the details about your favorite comic.</p>
-    <div class="steps">
-      <div class="step"><div class="num">1</div>
-        <h4>Upload Image</h4>
-        <p>Click, drag &amp; drop, or paste (<span class="kbd">Ctrl</span>+<span class="kbd">V</span>)
-          a panel screenshot from your device.</p>
-      </div>
-      <div class="step"><div class="num">2</div>
-        <h4>Search</h4>
-        <p>Our system analyzes the image with AI embeddings and matches it
-          against thousands of indexed panels.</p>
-      </div>
-      <div class="step"><div class="num">3</div>
-        <h4>Get Results</h4>
-        <p>View the title, chapter, author, and full details of the match.</p>
-      </div>
-    </div>
-  </section>
+<div class="howBox">
+<div class="sec-label">How It Works</div>
+<h2 class="sec">Find your comic in 3 simple steps</h2>
+<p class="sec-sub">Upload, search, then read the details.</p>
+<div class="steps">
+<div class="step"><div class="num">1</div>
+<h4>Upload image</h4>
+<p>Click, drag &amp; drop, or paste (<span class="kbd">Ctrl</span>+<span class="kbd">V</span>) a panel screenshot from your device.</p>
 </div>
-
-<!-- INDEXED -->
+<div class="step"><div class="num">2</div>
+<h4>Search</h4>
+<p>The system turns your image into an AI embedding and matches it against thousands of indexed panels.</p>
+</div>
+<div class="step"><div class="num">3</div>
+<h4>Get results</h4>
+<p>See the title, best-matching chapters, author and full details &mdash; ranked by similarity.</p>
+</div>
+</div>
+</div>
+</div>
 <div class="wrap" id="indexed">
-  <section>
-    <div class="sec-label">Database</div>
-    <h2 class="sec">Popular Searches</h2>
-    <p class="sec-sub" id="popSub">Loading…</p>
-    <div class="pop-row" id="popRow"></div>
-  </section>
+<section>
+<div class="sec-label">Database</div>
+<h2 class="sec">Popular in the index</h2>
+<p class="sec-sub" id="popSub">Loading&hellip;</p>
+<div class="pop-row" id="popRow"></div>
+</section>
 </div>
-
-<!-- FAQ -->
 <div class="wrap" id="faq">
-  <section>
-    <div class="sec-label">FAQ</div>
-    <h2 class="sec">Frequently Asked Questions</h2>
-    <div class="faq">
-      <details>
-        <summary>How long does a search take?</summary>
-        <p>About 20 seconds. Your image is converted into an AI embedding on
-          the server, then matched against the entire panel database with vector search.</p>
-      </details>
-      <details>
-        <summary>Are my uploaded images stored?</summary>
-        <p>No. Images are used once for the search and immediately discarded.
-          Only embeddings of the source comic panels are kept in the database.</p>
-      </details>
-      <details>
-        <summary>Which comics can be found?</summary>
-        <p>The database is filled automatically by a scraper bot from Indonesian
-          comic reading sites (manga, manhwa, manhua) and keeps growing.
-          Metadata such as titles, genres, and synopses comes from AniList.</p>
-      </details>
-      <details>
-        <summary>What if the results are inaccurate?</summary>
-        <p>Check the similarity score. Below 70% usually means the panel is not
-          in the database yet — try again later once the bot has indexed more chapters.</p>
-      </details>
-    </div>
-  </section>
+<section>
+<div class="sec-label">FAQ</div>
+<h2 class="sec">Frequently asked questions</h2>
+<div class="faq">
+<details>
+<summary>How long does a search take?</summary>
+<p>About 20 seconds. Your image is converted into an AI embedding on the server, then matched against the whole panel database with vector search.</p>
+</details>
+<details>
+<summary>Are my uploaded images stored?</summary>
+<p>No. Images are used once for the search and immediately discarded. Only embeddings of the source comic panels are kept in the database.</p>
+</details>
+<details>
+<summary>Which comics can be found?</summary>
+<p>The database is filled automatically by a scraper bot from comic reading sites (manga, manhwa, manhua) and keeps growing. Metadata such as titles, genres and synopses comes from AniList.</p>
+</details>
+<details>
+<summary>What if the results look wrong?</summary>
+<p>Check the similarity score. Below 70% usually means the panel is not in the database yet &mdash; try again later once more chapters are indexed.</p>
+</details>
 </div>
-
+</section>
+</div>
 <footer>
-  <div class="foot-in">
-    <a class="logo" style="font-size:.98rem" href="#home">
-      <span class="mark" style="width:26px;height:26px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></span>
-      Comic<b>Scan</b>
-    </a>
-    <span class="sp">© 2026 ComicScan. All rights reserved.</span>
-  </div>
+<div class="foot-in">
+<a class="flogo" href="#home"><span class="mark" style="width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></span>Comic<b style="color:#b9b8ff">Scan</b></a>
+<span>Find any comic from a single screenshot.</span>
+<span class="sp">&copy; 2026 ComicScan. All rights reserved.</span>
+</div>
 </footer>
-
 <script>
-const drop=document.getElementById('drop'), fileInput=document.getElementById('fileInput'),
-  chooseBtn=document.getElementById('chooseBtn'),
-  previewWrap=document.getElementById('previewWrap'), preview=document.getElementById('preview'),
-  cariBtn=document.getElementById('cariBtn'), loading=document.getElementById('loading'),
-  hasil=document.getElementById('hasil'), hasilSec=document.getElementById('hasilSec'),
-  warn=document.getElementById('warn'), timerEl=document.getElementById('timer');
-let file=null, timerInt=null;
-
-document.getElementById('ctaBtn').onclick=e=>{
-  e.preventDefault();
-  document.getElementById('home').scrollIntoView({behavior:'smooth'});
-};
-
-chooseBtn.onclick=e=>{e.stopPropagation();fileInput.click();};
-drop.onclick=()=>fileInput.click();
-['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over');}));
-['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over');}));
-drop.addEventListener('drop',ev=>setFile(ev.dataTransfer.files[0]));
-fileInput.onchange=()=>setFile(fileInput.files[0]);
-document.addEventListener('paste',ev=>{
-  const item=[...(ev.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
-  if(item)setFile(item.getAsFile());
+(function(){
+"use strict";
+var drop=document.getElementById('drop'),
+fileInput=document.getElementById('fileInput'),
+chooseBtn=document.getElementById('chooseBtn'),
+previewWrap=document.getElementById('previewWrap'),
+preview=document.getElementById('preview'),
+previewName=document.getElementById('previewName'),
+previewSize=document.getElementById('previewSize'),
+cariBtn=document.getElementById('cariBtn'),
+clearBtn=document.getElementById('clearBtn'),
+loading=document.getElementById('loading'),
+hasil=document.getElementById('hasil'),
+hasilSec=document.getElementById('hasilSec'),
+resCount=document.getElementById('resCount'),
+warn=document.getElementById('warn'),
+timerEl=document.getElementById('timer');
+var file=null,timerInt=null,objUrl=null;
+document.getElementById('ctaBtn').addEventListener('click',function(e){
+e.preventDefault();
+document.getElementById('home').scrollIntoView({behavior:'smooth'});
 });
-
+function fmtSize(b){
+if(!b&&b!==0)return '';
+if(b<1024)return b+' B';
+if(b<1048576)return (b/1024).toFixed(1)+' KB';
+return (b/1048576).toFixed(2)+' MB';
+}
 function setFile(f){
-  if(!f||!f.type.startsWith('image/'))return;
-  file=f; preview.src=URL.createObjectURL(f);
-  previewWrap.style.display='flex';
-  hasilSec.style.display='none'; hasil.innerHTML='';
-  warn.style.display='none';
-  previewWrap.scrollIntoView({behavior:'smooth',block:'center'});
+if(!f||!f.type||f.type.indexOf('image/')!==0)return;
+if(f.size>10*1024*1024){
+warn.textContent='Image too large (max 10MB). Choose a smaller file.';
+warn.classList.add('show','err');return;
 }
-
-cariBtn.onclick=async()=>{
-  if(!file)return;
-  const fd=new FormData(); fd.append('image',file);
-  loading.style.display='flex'; warn.style.display='none';
-  let t=0; timerEl.textContent='0';
-  timerInt=setInterval(()=>timerEl.textContent=++t,1000);
-  try{
-    const r=await fetch('/api/search',{method:'POST',body:fd});
-    const d=await r.json();
-    if(!r.ok)throw new Error(d.error||'failed');
-    tampilkan(d.results);
-  }catch(e){
-    warn.style.display='block';
-    warn.textContent='Something went wrong: '+e.message+'. Please try again.';
-  }finally{
-    clearInterval(timerInt); loading.style.display='none';
-  }
-};
-
-/* stats + indexed comics */
-fetch('/api/stats').then(r=>r.json()).then(s=>{
-  document.getElementById('popSub').textContent=
-    `${s.panels.toLocaleString('en-US')} panels indexed from ${s.comics} comics — and growing every day.`;
-}).catch(()=>{});
-fetch('/api/comics').then(r=>r.json()).then(d=>{
-  document.getElementById('popRow').innerHTML=d.comics.map(c=>`
-    <div class="pop">
-      <img src="${esc(c.cover)}" alt="" loading="lazy">
-      <div class="t">${esc(c.judul)}</div>
-      <div class="g">${(c.genres||[]).join(' · ')}</div>
-    </div>`).join('') || '<p style="color:var(--muted)">No data yet.</p>';
-}).catch(()=>{});
-
+file=f;
+if(objUrl)URL.revokeObjectURL(objUrl);
+objUrl=URL.createObjectURL(f);
+preview.src=objUrl;
+previewName.textContent=f.name||'pasted-image';
+previewSize.textContent=(f.type||'image')+' - '+fmtSize(f.size);
+previewWrap.classList.add('show');
+hasilSec.classList.remove('show');hasil.innerHTML='';
+warn.classList.remove('show','err');
+try{previewWrap.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}
+}
+function clearFile(){
+file=null;fileInput.value='';
+if(objUrl){URL.revokeObjectURL(objUrl);objUrl=null;}
+preview.removeAttribute('src');
+previewWrap.classList.remove('show');
+}
+chooseBtn.addEventListener('click',function(e){e.stopPropagation();fileInput.click();});
+drop.addEventListener('click',function(){fileInput.click();});
+drop.addEventListener('keydown',function(e){
+if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click();}
+});
+['dragover','dragenter'].forEach(function(ev){
+drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over');});
+});
+['dragleave','drop'].forEach(function(ev){
+drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over');});
+});
+drop.addEventListener('drop',function(e){
+var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+if(f)setFile(f);
+});
+fileInput.addEventListener('change',function(){setFile(fileInput.files[0]);});
+document.addEventListener('paste',function(e){
+var items=(e.clipboardData&&e.clipboardData.items)||[];
+for(var i=0;i<items.length;i++){
+if(items[i].type&&items[i].type.indexOf('image/')===0){
+var f=items[i].getAsFile();if(f)setFile(f);break;
+}
+}
+});
+clearBtn.addEventListener('click',function(e){e.stopPropagation();clearFile();});
+cariBtn.addEventListener('click',function(){
+if(!file||cariBtn.disabled)return;
+var fd=new FormData();fd.append('image',file);
+loading.classList.add('show');warn.classList.remove('show','err');
+cariBtn.disabled=true;
+hasil.innerHTML='<div class="skel"></div><div class="skel"></div>';
+hasilSec.classList.add('show');
+var t=0;timerEl.textContent='0';
+timerInt=setInterval(function(){t++;timerEl.textContent=String(t);},1000);
+fetch('/api/search',{method:'POST',body:fd}).then(function(r){
+return r.json().then(function(d){return {ok:r.ok,d:d};});
+}).then(function(out){
+if(!out.ok)throw new Error((out.d&&out.d.error)||'search failed');
+tampilkan(out.d.results||[]);
+}).catch(function(e){
+hasil.innerHTML='';
+warn.textContent='Something went wrong: '+e.message+'. Please try again.';
+warn.classList.add('show','err');
+try{warn.scrollIntoView({behavior:'smooth',block:'center'});}catch(err){}
+}).then(function(){
+clearInterval(timerInt);loading.classList.remove('show');cariBtn.disabled=false;
+});
+});
+fetch('/api/stats').then(function(r){return r.json();}).then(function(s){
+var p=(s.panels||0),c=(s.comics||0);
+var fp=document.getElementById('statPanels'),fc=document.getElementById('statComics');
+if(fp)fp.textContent=Number(p).toLocaleString('en-US');
+if(fc)fc.textContent=String(c);
+document.getElementById('popSub').textContent=
+Number(p).toLocaleString('en-US')+' panels from '+c+' comics - growing daily.';
+}).catch(function(){});
+fetch('/api/comics').then(function(r){return r.json();}).then(function(d){
+var list=(d&&d.comics)||[];
+document.getElementById('popRow').innerHTML=list.map(function(c){
+return '<div class="pop">'+
+(c.cover?'<img src="'+esc(c.cover)+'" alt="" loading="lazy">':'')+
+'<div class="t">'+esc(c.judul||c.slug||'Unknown')+'</div>'+
+'<div class="g">'+esc((c.genres||[]).join(' - '))+'</div></div>';
+}).join('')||'<p style="color:var(--muted)">No data yet.</p>';
+}).catch(function(){});
 function tampilkan(list){
-  if(!list.length){
-    warn.style.display='block';
-    warn.textContent='No matching panel found. The database is still being filled.';
-    return;
-  }
-  if(list[0].score<0.70){
-    warn.style.display='block';
-    warn.textContent='Top similarity is only '+list[0].kecocokan+
-      '% — this panel may not be in the database yet.';
-  }
-  hasilSec.style.display='block';
-  hasil.innerHTML=list.map((x,i)=>{
-    const alts=(x.judul_alternatif||[]).join(' · ');
-    const mid=x.kecocokan<85?'mid':'';
-    const sino=(x.sinopsis||'').replace(/<[^>]*>/g,'');
-    const staff=[];
-    if(x.story)staff.push(`<b>Story:</b> ${esc(x.story)}`);
-    if(x.art&&x.art!==x.story)staff.push(`<b>Art:</b> ${esc(x.art)}`);
-    const info=[x.jenis,x.status,x.tahun?(''+x.tahun):'',
-      x.total_chapter_anilist?(`${x.total_chapter_anilist} chapters`):'',
-      x.total_volume?(`${x.total_volume} volumes`):''].filter(Boolean);
-    const chRows=(x.chapters||[]).map((c,j)=>`
-      <div class="ch-row${j===0?' top':''}">
-        <span class="ch-name">Chapter ${esc(c.chapter)}</span>
-        <div class="bar"><i style="width:${c.kecocokan}%"></i></div>
-        <span class="pct">${c.kecocokan}%</span>
-      </div>`).join('');
-    return `
-    <div class="card">
-      <div class="side">
-        ${x.cover?`<img class="cover" src="${esc(x.cover)}" alt="" loading="lazy">`:''}
-        <div class="chapters">
-          <div class="ch-head">Matching chapters</div>
-          ${chRows}
-        </div>
-      </div>
-      <div class="body">
-        <div class="rank">Result ${i+1} &nbsp;·&nbsp; <span class="match ${mid}">${x.kecocokan}% best match</span></div>
-        <h3>${esc(x.judul||x.judul_komikindo||x.slug)}</h3>
-        ${alts?`<div class="alt">${esc(alts)}</div>`:''}
-        ${info.length?`<div class="meta">${info.map(v=>`<span class="pill dim">${esc(v)}</span>`).join('')}
-          ${x.skor_anilist?`<span class="ascore"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:var(--amber)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <b>${x.skor_anilist}%</b> on AniList</span>`:''}</div>`:''}
-        ${x.genres&&x.genres.length?
-          `<div class="chips">${x.genres.map(g=>`<span>${esc(g)}</span>`).join('')}</div>`:''}
-        ${x.tags&&x.tags.length?
-          `<div class="chips" style="opacity:.75">${x.tags.slice(0,5).map(g=>`<span>#${esc(g)}</span>`).join('')}</div>`:''}
-        ${staff.length?`<div class="staff">${staff.join(' &nbsp;·&nbsp; ')}</div>`:''}
-        ${sino?`<div class="sinopsis">${esc(sino)}</div>`:''}
-        ${x.anilist_url?`<div class="al"><a href="${esc(x.anilist_url)}" target="_blank" rel="noopener">View on AniList <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a></div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-  hasilSec.scrollIntoView({behavior:'smooth'});
+hasil.innerHTML='';
+if(!list.length){
+resCount.textContent='No match found.';
+warn.textContent='No matching panel found. The database is still being filled.';
+warn.classList.add('show');
+hasilSec.classList.add('show');
+return;
 }
-
-/* mobile menu */
-const menuBtn=document.getElementById('menuBtn'), mmenu=document.getElementById('mmenu');
-menuBtn.onclick=()=>mmenu.classList.toggle('open');
-mmenu.querySelectorAll('a').forEach(a=>a.onclick=()=>mmenu.classList.remove('open'));
+if(list[0].score<0.70){
+warn.textContent='Top similarity only '+list[0].kecocokan+
+'% - this panel may not be indexed yet.';
+warn.classList.add('show');
 }
-function esc(s){return String(s??'').replace(/[&<>"']/g,
-  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+resCount.textContent=list.length+' result'+(list.length>1?'s':'')+
+' - best match '+list[0].kecocokan+'% - sorted by similarity.';
+hasil.innerHTML=list.map(function(x,i){
+var alts=(x.judul_alternatif||[]).join(' - ');
+var mid=x.kecocokan<85?'mid':'';
+var sino=(x.sinopsis||'').replace(/<[^>]*>/g,'');
+var staff=[];
+if(x.story)staff.push('<b>Story:</b> '+esc(x.story));
+if(x.art&&x.art!==x.story)staff.push('<b>Art:</b> '+esc(x.art));
+var info=[x.jenis,x.status,x.tahun?(''+x.tahun):'',
+x.total_chapter_anilist?(''+x.total_chapter_anilist+' chapters'):'',
+x.total_volume?(''+x.total_volume+' volumes'):''].filter(Boolean);
+var chRows=(x.chapters||[]).map(function(c,j){
+return '<div class="ch-row'+(j===0?' top':'')+'">'+
+'<span class="ch-name">Ch. '+esc(c.chapter)+'</span>'+
+'<div class="bar"><i style="width:'+c.kecocokan+'%"></i></div>'+
+'<span class="pct">'+c.kecocokan+'%</span></div>';
+}).join('');
+var longSino=sino.length>220;
+return '<div class="card"><div class="side">'+
+(x.cover?'<img class="cover" src="'+esc(x.cover)+'" alt="" loading="lazy">':'')+
+'<div class="chapters"><div class="ch-head">Matching chapters</div>'+
+chRows+'</div></div><div class="body">'+
+'<div class="rank">Result '+(i+1)+' &nbsp;-&nbsp; <span class="match '+mid+'">'+
+x.kecocokan+'% best match</span></div>'+
+'<h3>'+esc(x.judul||x.slug||'Unknown')+'</h3>'+
+(alts?'<div class="alt">'+esc(alts)+'</div>':'');
+(alts?'<div class="alt">'+esc(alts)+'</div>':'')+
+(info.length?'<div class="meta">'+info.map(function(v){
+return '<span class="pill dim">'+esc(v)+'</span>';}).join('')+
+(x.skor_anilist?'<span class="ascore">* <b>'+x.skor_anilist+
+'%</b> on AniList</span>':'')+'</div>':'')+
+(x.genres&&x.genres.length?'<div class="chips">'+
+x.genres.map(function(g){return '<span>'+esc(g)+'</span>';}).join('')+
+'</div>':'')+
+(x.tags&&x.tags.length?'<div class="chips" style="opacity:.75">'+
+x.tags.slice(0,5).map(function(g){return '<span>#'+esc(g)+'</span>';}).join('')+
+'</div>':'')+
+(staff.length?'<div class="staff">'+staff.join(' &nbsp;-&nbsp; ')+'</div>':'')+
+(sino?'<div class="sinopsis'+(longSino?'" id="sino-'+i:'"')+'>'+esc(sino)+'</div>':'')+
+(longSino?'<button class="moreBtn" type="button" data-sino="sino-'+i+'">Read more</button>':'')+
+(x.anilist_url?'<div class="al"><a href="'+esc(x.anilist_url)+
+'" target="_blank" rel="noopener">View on AniList '+
+'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a></div>':'')+
+'</div></div>';
+}).join('');
+hasil.querySelectorAll('.moreBtn').forEach(function(b){
+b.addEventListener('click',function(){
+var el=document.getElementById(b.getAttribute('data-sino'));
+if(!el)return;
+var open=el.classList.toggle('open');
+b.textContent=open?'Show less':'Read more';
+});
+});
+hasilSec.classList.add('show');
+try{hasilSec.scrollIntoView({behavior:'smooth'});}catch(e){}
+}
+var menuBtn=document.getElementById('menuBtn'),mmenu=document.getElementById('mmenu');
+menuBtn.addEventListener('click',function(){
+var open=mmenu.classList.toggle('open');
+menuBtn.setAttribute('aria-expanded',open?'true':'false');
+});
+mmenu.querySelectorAll('a').forEach(function(a){
+a.addEventListener('click',function(){
+mmenu.classList.remove('open');menuBtn.setAttribute('aria-expanded','false');
+});
+});
+})();
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,
+function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 </script>
 </body>
 </html>
+

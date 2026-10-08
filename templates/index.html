@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ComicScan — Search Comic by Screenshot</title>
+<style>
+  :root{
+    --bg:#0b0e1a; --bg2:#10142a; --card:#151a33; --card2:#1a2040;
+    --line:#232a52; --text:#f4f6ff; --muted:#9aa3c7;
+    --accent:#5b5bd6; --accent2:#8b5cf6; --green:#4ade80; --amber:#fbbf24;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  svg.ic{width:1.25em;height:1.25em;vertical-align:-.28em;flex-shrink:0}
+
+  /* ---------- navbar ---------- */
+  nav{position:sticky;top:0;z-index:50;background:rgba(11,14,26,.9);
+    backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{max-width:1180px;margin:0 auto;padding:13px 22px;
+    display:flex;align-items:center;gap:32px}
+  .logo{font-size:1.22rem;font-weight:800;display:flex;align-items:center;gap:10px;
+    text-decoration:none;letter-spacing:.2px}
+  .logo .mark{width:34px;height:34px;border-radius:10px;display:flex;
+    align-items:center;justify-content:center;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .logo .mark svg{width:20px;height:20px}
+  .logo b{color:#b9b8ff;font-weight:800}
+  .links{display:flex;gap:26px;margin-left:10px}
+  .links a{text-decoration:none;color:var(--muted);font-size:.9rem;font-weight:500}
+  .links a:hover{color:var(--text)}
+  .nav-cta{margin-left:auto;background:var(--accent);color:#fff;border:0;
+    padding:10px 24px;border-radius:999px;font-weight:700;font-size:.88rem;
+    cursor:pointer;text-decoration:none;transition:.15s}
+  .nav-cta:hover{background:#6d6df0}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+  section{padding:64px 0}
+
+  /* ---------- hero ---------- */
+  .hero{display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center;
+    padding:60px 0 34px}
+  .hero h1{font-size:clamp(2.05rem,4.5vw,3.1rem);line-height:1.1;font-weight:800;letter-spacing:-.5px}
+  .hero h1 .grad{background:linear-gradient(90deg,#7c7cf4,#b39dff);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.sub{color:var(--muted);margin:18px 0 28px;font-size:1.02rem;line-height:1.65;max-width:480px}
+  .hero img.art{width:100%;border-radius:20px;border:1px solid var(--line);
+    box-shadow:0 24px 70px rgba(0,0,0,.55)}
+
+  #drop{border:1.5px dashed #3a4380;border-radius:16px;padding:28px 22px;
+    text-align:center;cursor:pointer;background:var(--bg2);transition:.2s;max-width:520px}
+  #drop:hover,#drop.over{border-color:var(--accent);background:#131840}
+  #drop .upl{color:var(--accent2);margin-bottom:10px}
+  #drop .upl svg{width:40px;height:40px}
+  #drop .or{color:var(--muted);font-size:.82rem;margin:8px 0}
+  #chooseBtn{display:inline-block;background:var(--accent);color:#fff;border:0;
+    padding:10px 34px;border-radius:999px;font-weight:700;font-size:.88rem;cursor:pointer}
+  #chooseBtn:hover{background:#6d6df0}
+  #drop small{color:var(--muted);display:block;margin-top:12px;font-size:.78rem;line-height:1.9}
+  #drop .kbd{display:inline-block;background:#0b0e1a;border:1px solid var(--line);
+    border-bottom-width:2px;border-radius:6px;padding:1px 8px;font-size:.72rem;
+    color:var(--muted);margin:0 2px;font-family:inherit}
+  input[type=file]{display:none}
+  #previewWrap{display:none;margin-top:16px;align-items:center;gap:14px}
+  #preview{width:74px;height:74px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+  #cariBtn{padding:12px 38px;font-size:.92rem;border:0;border-radius:999px;cursor:pointer;
+    color:#fff;font-weight:700;background:var(--accent);transition:.15s}
+  #cariBtn:hover{background:#6d6df0}
+  #loading{display:none;margin-top:16px;color:var(--muted);font-size:.9rem;align-items:center;gap:12px}
+  .spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);
+    border-top-color:var(--accent);animation:putar 1s linear infinite;flex-shrink:0}
+  @keyframes putar{to{transform:rotate(360deg)}}
+  #warn{display:none;margin-top:16px;padding:12px 16px;border-radius:12px;max-width:520px;
+    background:#2b2111;border:1px solid #6b5426;color:#f3d894;font-size:.87rem}
+
+  /* ---------- results ---------- */
+  #hasilSec{display:none}
+  .sec-label{color:var(--accent2);font-size:.76rem;font-weight:800;
+    text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+  h2.sec{font-size:1.7rem;font-weight:800;margin-bottom:6px;letter-spacing:-.3px}
+  p.sec-sub{color:var(--muted);font-size:.92rem;margin-bottom:26px}
+  #hasil{display:flex;flex-direction:column;gap:18px;max-width:880px}
+  .card{display:flex;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;overflow:hidden;transition:.15s;align-items:stretch}
+  .card:hover{border-color:#38418a}
+  .side{width:236px;flex-shrink:0;background:rgba(0,0,0,.22);
+    display:flex;flex-direction:column}
+  .side .cover{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;
+    background:#080a14;display:block}
+  .card .body{padding:22px;flex:1;min-width:0}
+
+  /* ---------- chapter list (di bawah cover) ---------- */
+  .chapters{padding:12px 16px 14px}
+  .ch-head{font-size:.7rem;font-weight:800;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--muted);padding:4px 0 2px}
+  .ch-row{display:flex;align-items:center;gap:10px;padding:8px 0;
+    border-top:1px solid var(--line)}
+  .ch-row:first-of-type{border-top:0}
+  .ch-row .ch-name{font-size:.8rem;font-weight:700;min-width:80px}
+  .ch-row .bar{flex:1;height:6px;background:#0b0e1a;border-radius:99px;overflow:hidden;min-width:40px}
+  .ch-row .bar i{display:block;height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .ch-row .pct{font-size:.78rem;font-weight:700;color:var(--green);min-width:50px;text-align:right}
+  .ch-row.top .ch-name{color:#c9b8ff}
+  .card .body{padding:20px 22px;flex:1;min-width:0}
+  .card .rank{font-size:.68rem;color:var(--muted);font-weight:800;
+    text-transform:uppercase;letter-spacing:1.5px}
+  .card h3{font-size:1.28rem;margin:5px 0 3px;letter-spacing:-.2px}
+  .card .alt{color:var(--muted);font-size:.8rem;line-height:1.55;margin-bottom:12px}
+  .meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+  .pill{font-size:.76rem;font-weight:700;padding:5px 14px;border-radius:999px;
+    background:var(--accent);color:#fff}
+  .pill.dim{background:#232a52;color:#c6cdf5;font-weight:600}
+  .match{font-size:.8rem;font-weight:700;padding:5px 12px;border-radius:999px;
+    background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .match.mid{background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.3)}
+  .ascore{font-size:.82rem;color:var(--muted)}
+  .ascore b{color:var(--amber)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chips span{font-size:.72rem;color:#c6cdf5;border:1px solid var(--line);
+    padding:3px 11px;border-radius:999px;background:var(--card2)}
+  .staff{font-size:.82rem;color:var(--muted);margin-bottom:10px;line-height:1.7}
+  .staff b{color:#c6cdf5;font-weight:600}
+  .sinopsis{font-size:.86rem;color:var(--muted);line-height:1.65;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .al{margin-top:12px;font-size:.84rem}
+  .al a{color:#8f8ff5;text-decoration:none;font-weight:600;
+    display:inline-flex;align-items:center;gap:6px}
+  .al a:hover{text-decoration:underline}
+
+  /* ---------- responsive ---------- */
+  #menuBtn{display:none;background:none;border:0;color:var(--text);cursor:pointer;padding:8px}
+  #menuBtn svg{width:24px;height:24px}
+  .mobile-menu{display:none}
+
+  @media(max-width:1024px){
+    .hero h1{font-size:2.6rem}
+  }
+  @media(max-width:900px){
+    .hero{grid-template-columns:1fr;gap:32px;padding-top:44px}
+    .hero img.art{max-height:380px;object-fit:cover}
+    .feat-grid{grid-template-columns:repeat(2,1fr)}
+    .steps{grid-template-columns:1fr}
+    /* kartu hasil: tumpuk vertikal */
+    .card{flex-direction:column}
+    .side{width:100%;flex-direction:row;align-items:stretch}
+    .side .cover{width:150px;flex-shrink:0}
+    .chapters{flex:1;min-width:0}
+  }
+  @media(max-width:760px){
+    .links{display:none}
+    #menuBtn{display:block}
+    .nav-cta{margin-left:auto;padding:9px 18px;font-size:.82rem}
+    .mobile-menu{display:none;border-top:1px solid var(--line);padding:6px 22px 14px;
+      background:rgba(11,14,26,.97)}
+    .mobile-menu.open{display:block}
+    .mobile-menu a{display:block;padding:11px 0;color:var(--muted);
+      text-decoration:none;font-size:.92rem;border-bottom:1px solid var(--line)}
+    .mobile-menu a:last-child{border-bottom:0}
+    section{padding:48px 0}
+  }
+  @media(max-width:560px){
+    .hero h1{font-size:2.05rem}
+    .hero p.sub{font-size:.94rem}
+    .hero img.art{max-height:260px}
+    .feat-grid{grid-template-columns:1fr}
+    .side{flex-direction:column}
+    .side .cover{width:100%;max-height:300px}
+    .card .body{padding:18px}
+    .card h3{font-size:1.12rem}
+    #previewWrap{flex-wrap:wrap}
+    .foot-in{flex-direction:column;gap:8px;text-align:center}
+    .foot-in .sp{margin-left:0}
+    h2.sec{font-size:1.4rem}
+  }
+
+  /* ---------- features ---------- */
+  .feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:30px}
+  .feat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 20px}
+  .feat .ic{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;margin-bottom:14px;color:#fff}
+  .feat .ic svg{width:22px;height:22px}
+  .feat h4{font-size:.96rem;margin-bottom:8px}
+  .feat p{color:var(--muted);font-size:.84rem;line-height:1.6}
+
+  /* ---------- steps ---------- */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:28px 24px;position:relative}
+  .step .num{position:absolute;top:-14px;left:22px;width:30px;height:30px;border-radius:50%;
+    background:var(--accent);display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:.9rem}
+  .step h4{margin:8px 0 10px;font-size:1rem}
+  .step p{color:var(--muted);font-size:.86rem;line-height:1.65}
+
+  /* ---------- popular ---------- */
+  .pop-row{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 14px;margin-top:26px}
+  .pop{flex:0 0 150px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;overflow:hidden}
+  .pop img{width:100%;height:200px;object-fit:cover;background:#080a14;display:block}
+  .pop .t{padding:10px 12px;font-size:.78rem;font-weight:600;line-height:1.4;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pop .g{padding:0 12px 12px;font-size:.7rem;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- faq ---------- */
+  .faq{max-width:760px;margin-top:26px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    margin-bottom:12px;overflow:hidden}
+  summary{padding:18px 22px;cursor:pointer;font-weight:600;font-size:.94rem;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:'+';float:right;color:var(--accent2);font-size:1.2rem;font-weight:800}
+  details[open] summary::after{content:'−'}
+  details p{padding:0 22px 20px;color:var(--muted);font-size:.87rem;line-height:1.7}
+
+  footer{border-top:1px solid var(--line);margin-top:40px}
+  .foot-in{max-width:1180px;margin:0 auto;padding:28px 22px;display:flex;
+    align-items:center;gap:10px;color:var(--muted);font-size:.84rem}
+  .foot-in .sp{margin-left:auto}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <a class="logo" href="#home">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></span>
+      Comic<b>Scan</b>
+    </a>
+    <div class="links">
+      <a href="#home">Home</a>
+      <a href="#how">How It Works</a>
+      <a href="#features">Features</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="nav-cta" href="#home" id="ctaBtn">Start Scanning</a>
+    <button id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+  </div>
+  <div class="mobile-menu" id="mmenu">
+    <a href="#home">Home</a>
+    <a href="#how">How It Works</a>
+    <a href="#features">Features</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="wrap" id="home">
+  <div class="hero">
+    <div>
+      <h1>Search <span class="grad">Comic</span><br>by Screenshot</h1>
+      <p class="sub">Upload a screenshot, find the comic title, chapter,
+        and more. Quickly and accurately.</p>
+      <div id="drop">
+        <div class="upl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <b>Drag &amp; drop your image here</b>
+        <div class="or">or</div>
+        <button id="chooseBtn" type="button">Choose Image</button>
+        <small>Supports JPG, PNG, WEBP (Max 10MB)<br>
+          You can also paste directly with <span class="kbd">Ctrl</span>+<span class="kbd">V</span></small>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      <div id="previewWrap">
+        <img id="preview" alt="Preview">
+        <button id="cariBtn">Scan Panel</button>
+      </div>
+      <div id="loading"><div class="spin"></div>
+        <span>Analyzing image… <span id="timer">0</span>s <span style="opacity:.7">(usually about 20 seconds)</span></span></div>
+      <div id="warn"></div>
+    </div>
+    <div><img class="art" src="/static/hero.png" alt="Reading manga illustration"></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="wrap" id="hasilSec">
+  <section style="padding-top:10px">
+    <div class="sec-label">Search Results</div>
+    <h2 class="sec">Your panel was found in…</h2>
+    <p class="sec-sub">Sorted by highest similarity.</p>
+    <div id="hasil"></div>
+  </section>
+</div>
+
+<!-- FEATURES -->
+<div class="wrap" id="features">
+  <section>
+    <div class="sec-label">Features</div>
+    <h2 class="sec">Why ComicScan?</h2>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="ic" style="background:rgba(91,91,214,.2);color:#9d9df5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></div>
+        <h4>Reverse Image Search</h4>
+        <p>Find the exact comic from any screenshot — even a small panel crop.</p>
+      </div>
+      <div class="feat">
+        <div class="ic" style="background:rgba(74,222,128,.15);color:#4ade80"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <h4>Fast &amp; Accurate</h4>
+        <p>Get results in seconds with a clear similarity score for every match.</p>
+      </div>
+      <div class="feat">
+        <div class="ic" style="background:rgba(139,92,246,.18);color:#b39dff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+        <h4>Detailed Information</h4>
+        <p>Title, chapter, author, genres, status, synopsis — powered by AniList data.</p>
+      </div>
+      <div class="feat">
+        <div class="ic" style="background:rgba(251,191,36,.15);color:#fbbf24"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+        <h4>Free to Use</h4>
+        <p>No registration required. Uploaded images are never stored.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="wrap" id="how">
+  <section style="background:var(--bg2);border-radius:24px;padding:54px 40px">
+    <div class="sec-label">How It Works</div>
+    <h2 class="sec">Find Your Comic in 3 Simple Steps</h2>
+    <p class="sec-sub">Just upload, search, and get the details about your favorite comic.</p>
+    <div class="steps">
+      <div class="step"><div class="num">1</div>
+        <h4>Upload Image</h4>
+        <p>Click, drag &amp; drop, or paste (<span class="kbd">Ctrl</span>+<span class="kbd">V</span>)
+          a panel screenshot from your device.</p>
+      </div>
+      <div class="step"><div class="num">2</div>
+        <h4>Search</h4>
+        <p>Our system analyzes the image with AI embeddings and matches it
+          against thousands of indexed panels.</p>
+      </div>
+      <div class="step"><div class="num">3</div>
+        <h4>Get Results</h4>
+        <p>View the title, chapter, author, and full details of the match.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- INDEXED -->
+<div class="wrap" id="indexed">
+  <section>
+    <div class="sec-label">Database</div>
+    <h2 class="sec">Popular Searches</h2>
+    <p class="sec-sub" id="popSub">Loading…</p>
+    <div class="pop-row" id="popRow"></div>
+  </section>
+</div>
+
+<!-- FAQ -->
+<div class="wrap" id="faq">
+  <section>
+    <div class="sec-label">FAQ</div>
+    <h2 class="sec">Frequently Asked Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>How long does a search take?</summary>
+        <p>About 20 seconds. Your image is converted into an AI embedding on
+          the server, then matched against the entire panel database with vector search.</p>
+      </details>
+      <details>
+        <summary>Are my uploaded images stored?</summary>
+        <p>No. Images are used once for the search and immediately discarded.
+          Only embeddings of the source comic panels are kept in the database.</p>
+      </details>
+      <details>
+        <summary>Which comics can be found?</summary>
+        <p>The database is filled automatically by a scraper bot from Indonesian
+          comic reading sites (manga, manhwa, manhua) and keeps growing.
+          Metadata such as titles, genres, and synopses comes from AniList.</p>
+      </details>
+      <details>
+        <summary>What if the results are inaccurate?</summary>
+        <p>Check the similarity score. Below 70% usually means the panel is not
+          in the database yet — try again later once the bot has indexed more chapters.</p>
+      </details>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="foot-in">
+    <a class="logo" style="font-size:.98rem" href="#home">
+      <span class="mark" style="width:26px;height:26px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></span>
+      Comic<b>Scan</b>
+    </a>
+    <span class="sp">© 2026 ComicScan. All rights reserved.</span>
+  </div>
+</footer>
+
+<script>
+const drop=document.getElementById('drop'), fileInput=document.getElementById('fileInput'),
+  chooseBtn=document.getElementById('chooseBtn'),
+  previewWrap=document.getElementById('previewWrap'), preview=document.getElementById('preview'),
+  cariBtn=document.getElementById('cariBtn'), loading=document.getElementById('loading'),
+  hasil=document.getElementById('hasil'), hasilSec=document.getElementById('hasilSec'),
+  warn=document.getElementById('warn'), timerEl=document.getElementById('timer');
+let file=null, timerInt=null;
+
+document.getElementById('ctaBtn').onclick=e=>{
+  e.preventDefault();
+  document.getElementById('home').scrollIntoView({behavior:'smooth'});
+};
+
+chooseBtn.onclick=e=>{e.stopPropagation();fileInput.click();};
+drop.onclick=()=>fileInput.click();
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',ev=>setFile(ev.dataTransfer.files[0]));
+fileInput.onchange=()=>setFile(fileInput.files[0]);
+document.addEventListener('paste',ev=>{
+  const item=[...(ev.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+  if(item)setFile(item.getAsFile());
+});
+
+function setFile(f){
+  if(!f||!f.type.startsWith('image/'))return;
+  file=f; preview.src=URL.createObjectURL(f);
+  previewWrap.style.display='flex';
+  hasilSec.style.display='none'; hasil.innerHTML='';
+  warn.style.display='none';
+  previewWrap.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+cariBtn.onclick=async()=>{
+  if(!file)return;
+  const fd=new FormData(); fd.append('image',file);
+  loading.style.display='flex'; warn.style.display='none';
+  let t=0; timerEl.textContent='0';
+  timerInt=setInterval(()=>timerEl.textContent=++t,1000);
+  try{
+    const r=await fetch('/api/search',{method:'POST',body:fd});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'failed');
+    tampilkan(d.results);
+  }catch(e){
+    warn.style.display='block';
+    warn.textContent='Something went wrong: '+e.message+'. Please try again.';
+  }finally{
+    clearInterval(timerInt); loading.style.display='none';
+  }
+};
+
+/* stats + indexed comics */
+fetch('/api/stats').then(r=>r.json()).then(s=>{
+  document.getElementById('popSub').textContent=
+    `${s.panels.toLocaleString('en-US')} panels indexed from ${s.comics} comics — and growing every day.`;
+}).catch(()=>{});
+fetch('/api/comics').then(r=>r.json()).then(d=>{
+  document.getElementById('popRow').innerHTML=d.comics.map(c=>`
+    <div class="pop">
+      <img src="${esc(c.cover)}" alt="" loading="lazy">
+      <div class="t">${esc(c.judul)}</div>
+      <div class="g">${(c.genres||[]).join(' · ')}</div>
+    </div>`).join('') || '<p style="color:var(--muted)">No data yet.</p>';
+}).catch(()=>{});
+
+function tampilkan(list){
+  if(!list.length){
+    warn.style.display='block';
+    warn.textContent='No matching panel found. The database is still being filled.';
+    return;
+  }
+  if(list[0].score<0.70){
+    warn.style.display='block';
+    warn.textContent='Top similarity is only '+list[0].kecocokan+
+      '% — this panel may not be in the database yet.';
+  }
+  hasilSec.style.display='block';
+  hasil.innerHTML=list.map((x,i)=>{
+    const alts=(x.judul_alternatif||[]).join(' · ');
+    const mid=x.kecocokan<85?'mid':'';
+    const sino=(x.sinopsis||'').replace(/<[^>]*>/g,'');
+    const staff=[];
+    if(x.story)staff.push(`<b>Story:</b> ${esc(x.story)}`);
+    if(x.art&&x.art!==x.story)staff.push(`<b>Art:</b> ${esc(x.art)}`);
+    const info=[x.jenis,x.status,x.tahun?(''+x.tahun):'',
+      x.total_chapter_anilist?(`${x.total_chapter_anilist} chapters`):'',
+      x.total_volume?(`${x.total_volume} volumes`):''].filter(Boolean);
+    const chRows=(x.chapters||[]).map((c,j)=>`
+      <div class="ch-row${j===0?' top':''}">
+        <span class="ch-name">Chapter ${esc(c.chapter)}</span>
+        <div class="bar"><i style="width:${c.kecocokan}%"></i></div>
+        <span class="pct">${c.kecocokan}%</span>
+      </div>`).join('');
+    return `
+    <div class="card">
+      <div class="side">
+        ${x.cover?`<img class="cover" src="${esc(x.cover)}" alt="" loading="lazy">`:''}
+        <div class="chapters">
+          <div class="ch-head">Matching chapters</div>
+          ${chRows}
+        </div>
+      </div>
+      <div class="body">
+        <div class="rank">Result ${i+1} &nbsp;·&nbsp; <span class="match ${mid}">${x.kecocokan}% best match</span></div>
+        <h3>${esc(x.judul||x.judul_komikindo||x.slug)}</h3>
+        ${alts?`<div class="alt">${esc(alts)}</div>`:''}
+        ${info.length?`<div class="meta">${info.map(v=>`<span class="pill dim">${esc(v)}</span>`).join('')}
+          ${x.skor_anilist?`<span class="ascore"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:var(--amber)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <b>${x.skor_anilist}%</b> on AniList</span>`:''}</div>`:''}
+        ${x.genres&&x.genres.length?
+          `<div class="chips">${x.genres.map(g=>`<span>${esc(g)}</span>`).join('')}</div>`:''}
+        ${x.tags&&x.tags.length?
+          `<div class="chips" style="opacity:.75">${x.tags.slice(0,5).map(g=>`<span>#${esc(g)}</span>`).join('')}</div>`:''}
+        ${staff.length?`<div class="staff">${staff.join(' &nbsp;·&nbsp; ')}</div>`:''}
+        ${sino?`<div class="sinopsis">${esc(sino)}</div>`:''}
+        ${x.anilist_url?`<div class="al"><a href="${esc(x.anilist_url)}" target="_blank" rel="noopener">View on AniList <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  hasilSec.scrollIntoView({behavior:'smooth'});
+}
+
+/* mobile menu */
+const menuBtn=document.getElementById('menuBtn'), mmenu=document.getElementById('mmenu');
+menuBtn.onclick=()=>mmenu.classList.toggle('open');
+mmenu.querySelectorAll('a').forEach(a=>a.onclick=()=>mmenu.classList.remove('open'));
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+</script>
+</body>
+</html>

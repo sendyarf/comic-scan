@@ -69,8 +69,9 @@ text-decoration:none;font-size:.94rem;border-bottom:1px solid var(--line)}
 .mobile-menu a:last-child{border-bottom:0}
 /* hero + upload */
 .hero{display:grid;grid-template-columns:1fr;gap:26px;align-items:start;
-padding-block:clamp(26px,6vw,58px) clamp(18px,4vw,32px)}
-.hero-copy,.hero-art{min-width:0;max-width:100%}
+padding-block:clamp(26px,6vw,58px) clamp(18px,4vw,32px);
+max-width:720px;margin-inline:auto;text-align:center}
+.hero-copy{min-width:0;max-width:100%}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;
 font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted2);
 background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);
@@ -81,15 +82,15 @@ background:var(--green);box-shadow:0 0 8px var(--green)}
 letter-spacing:-.5px;text-wrap:balance;overflow-wrap:anywhere}
 .hero h1 .grad{background:linear-gradient(90deg,#7c7cf4,#b39dff);
 -webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p.sub{color:var(--muted);margin:14px 0 20px;max-width:52ch;
+.hero p.sub{color:var(--muted);margin:14px auto 20px;max-width:52ch;
 font-size:clamp(.92rem,2.4vw,1.02rem);line-height:1.65}
-.hero-stats{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:20px}
+.hero-stats{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:20px;justify-content:center}
 .hero-stats .stat{display:flex;align-items:baseline;gap:7px;min-width:0}
 .hero-stats b{font-size:1rem;font-variant-numeric:tabular-nums}
 .hero-stats span{color:var(--muted);font-size:.78rem;white-space:nowrap}
 #drop{border:1.5px dashed #3a4380;border-radius:var(--rM);
 padding:clamp(20px,5vw,28px) clamp(14px,4vw,22px);text-align:center;
-cursor:pointer;background:var(--bg2);transition:.2s;width:100%;max-width:560px}
+cursor:pointer;background:var(--bg2);transition:.2s;width:100%;max-width:560px;margin-inline:auto}
 #drop:hover,#drop.over{border-color:var(--accent);background:#131840}
 #drop .upl{color:var(--accent2);margin-bottom:10px}
 #drop .upl svg{width:40px;height:40px;margin-inline:auto}
@@ -108,7 +109,7 @@ border-bottom-width:2px;border-radius:6px;padding:1px 8px;font-size:.7rem;
 color:var(--muted);margin:0 2px;font-family:inherit;white-space:nowrap}
 input[type=file]{position:absolute;width:1px;height:1px;opacity:0;
 overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-#previewWrap{display:none;margin-top:14px;gap:10px;align-items:center;
+#previewWrap{display:none;margin:14px auto 0;gap:10px;align-items:center;
 background:var(--card);border:1px solid var(--line);border-radius:var(--rM);
 padding:12px;width:100%;max-width:560px}
 #previewWrap.show{display:flex}
@@ -127,7 +128,7 @@ transition:.15s;flex-shrink:0;min-height:46px;white-space:nowrap}
 border-radius:999px;padding:10px 13px;font-size:.8rem;font-weight:600;
 cursor:pointer;flex-shrink:0;min-height:44px;min-width:44px}
 #clearBtn:hover{color:var(--text);border-color:var(--line2)}
-#loading{display:none;margin-top:14px;color:var(--muted);font-size:.86rem;
+#loading{display:none;margin:14px auto 0;color:var(--muted);font-size:.86rem;
 align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
 border-radius:var(--rM);padding:14px 16px;width:100%;max-width:560px}
 #loading.show{display:flex}
@@ -136,21 +137,16 @@ border:3px solid var(--line);border-top-color:var(--accent);
 animation:putar 1s linear infinite}
 @keyframes putar{to{transform:rotate(360deg)}}
 #loading .ltxt{min-width:0}
-#warn{display:none;margin-top:14px;padding:13px 16px;border-radius:var(--rS);
+#warn{display:none;margin:14px auto 0;padding:13px 16px;border-radius:var(--rS);
 width:100%;max-width:560px;background:#2b2111;border:1px solid #6b5426;
 color:#f3d894;font-size:.85rem;line-height:1.6;overflow-wrap:anywhere}
 #warn.show{display:block}
 #warn.err{background:#2e1519;border-color:#6e2b33;color:#fca5a5}
-.hero-art .frame{position:relative;border-radius:var(--rL);overflow:hidden;
-border:1px solid var(--line);box-shadow:var(--shadow);background:var(--bg2)}
-.hero img.art{width:100%;height:auto;aspect-ratio:16/10;object-fit:cover}
-.hero-art .badge{position:absolute;left:12px;bottom:12px;right:12px;
-display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--muted2);
-background:rgba(11,14,26,.84);backdrop-filter:blur(8px);
-border:1px solid var(--line);border-radius:14px;padding:10px 14px}
-.hero-art .badge b{color:var(--text)}
-.hero-art .badge .ok{width:8px;height:8px;border-radius:50%;flex-shrink:0;
+.privacy{display:inline-flex;align-items:center;gap:8px;margin-top:16px;
+font-size:.78rem;color:var(--muted)}
+.privacy .ok{width:8px;height:8px;border-radius:50%;flex-shrink:0;
 background:var(--green);box-shadow:0 0 10px var(--green)}
+.privacy b{color:var(--muted2)}
 /* results */
 #hasilSec{display:none;scroll-margin-top:calc(var(--navH) + 12px)}
 #hasilSec.show{display:block}
@@ -277,8 +273,6 @@ font-weight:800;color:var(--text);font-size:.95rem}
 .links{display:flex}
 #menuBtn,.mobile-menu{display:none !important}
 .nav-cta{padding:10px 24px;font-size:.86rem}
-.hero{grid-template-columns:1.02fr .98fr;gap:clamp(28px,4vw,48px);align-items:center}
-.hero-art{position:sticky;top:calc(var(--navH) + 16px)}
 .steps{grid-template-columns:repeat(3,1fr)}
 }
 @media(min-width:1024px){
@@ -345,12 +339,7 @@ Paste directly with <span class="kbd">Ctrl</span>+<span class="kbd">V</span></sm
 <div id="loading" role="status" aria-live="polite"><div class="spin"></div>
 <div class="ltxt">Analyzing image&hellip; <b id="timer">0</b>s <span style="opacity:.7">(usually about 20 seconds)</span></div></div>
 <div id="warn" role="alert"></div>
-</div>
-<div class="hero-art">
-<div class="frame">
-<img class="art" src="/static/hero.png" alt="Reading manga illustration" fetchpriority="high">
-<div class="badge"><span class="ok"></span><span><b>Private by design</b> &mdash; uploads are never stored</span></div>
-</div>
+<div class="privacy"><span class="ok"></span><span><b>Private by design</b> &mdash; uploads are never stored</span></div>
 </div>
 </div>
 </div>
